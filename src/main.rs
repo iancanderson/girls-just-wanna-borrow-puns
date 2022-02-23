@@ -12,16 +12,14 @@ type RhymeResultOk = Vec<Rhyme>;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let word: &str = "heart";
     let rhymeurl: std::string::String = format!(
-        "https://rhymebrain.com/talk?function=getRhymes&word={}",
+        "https://rhymebrain.com/talk?function=getRhymes&maxResults=50&word={}",
         word
     );
-    let rhymes = reqwest::blocking::get(rhymeurl)?.json::<RhymeResultOk>()?;
-    println!("Rhymes of {}: {:?}", word, rhymes);
-
+    let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
     let rhyme_references = rhymes.iter().map(|r| r).collect::<Vec<_>>();
     let best_rhymes = keep_best_rhymes(rhyme_references);
+    println!("{:?}", best_rhymes);
 
-    println!("Best rhymes of {}: {:?}", word, best_rhymes);
     Ok(())
 }
 
