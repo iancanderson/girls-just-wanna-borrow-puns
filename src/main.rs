@@ -32,11 +32,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
     let rhyme_references = rhymes.iter().map(|r| r).collect::<Vec<_>>();
     let best_rhymes = keep_single_words(rhyme_references);
-    // println!("{:?}", best_rhymes);
 
     // Load array of strings from text file
     let beatles_songs = lines_from_file("phrases/beatles-songs.txt");
-    // println!("{:?}", beatles_songs);
 
     let puns = puns(&beatles_songs, &best_rhymes, word);
     let mut table = Table::new();
@@ -67,7 +65,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String {
-    // println!("Replacing {} with {} in {}", word, replacement, phrase);
     let mut new_phrase = String::new();
     let phrase_words = phrase.split_whitespace();
     for phrase_word in phrase_words {
