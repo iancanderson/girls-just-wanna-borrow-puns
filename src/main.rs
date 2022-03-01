@@ -33,10 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rhyme_references = rhymes.iter().map(|r| r).collect::<Vec<_>>();
     let best_rhymes = keep_single_words(rhyme_references);
 
-    // Load array of strings from text file
-    let beatles_songs = lines_from_file("phrases/beatles-songs.txt");
-
-    let puns = puns(&beatles_songs, &best_rhymes, word);
+    let puns = puns(&best_rhymes, word);
     print_puns(&puns);
 
     Ok(())
@@ -82,7 +79,14 @@ fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String
     new_phrase.trim().to_string()
 }
 
-fn puns(phrases: &Vec<String>, rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
+fn load_phrases() -> Vec<String> {
+    // Load array of strings from text file
+    let beatles_songs = lines_from_file("phrases/beatles-songs.txt");
+    return beatles_songs;
+}
+
+fn puns(rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
+    let phrases = load_phrases();
     let mut puns = Vec::new();
     for phrase in phrases {
         let phrase_lower = phrase.to_lowercase();
