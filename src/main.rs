@@ -19,11 +19,16 @@ struct Rhyme {
 
 type RhymeResultOk = Vec<Rhyme>;
 
+struct Phrase {
+    content: String,
+    source: String,
+}
+
 #[derive(Debug)]
 struct Pun {
     original: String,
     pun: String,
-    rhyme_word: String,
+    phrase_source: String,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -58,7 +63,7 @@ fn print_puns(puns: &[&Pun]) {
             .with_style(prettytable::Attr::ForegroundColor(
                 prettytable::color::GREEN,
             )),
-        Cell::new("Rhyme word")
+        Cell::new("Phrase source")
             .with_style(prettytable::Attr::Bold)
             .with_style(prettytable::Attr::ForegroundColor(
                 prettytable::color::GREEN,
@@ -66,7 +71,7 @@ fn print_puns(puns: &[&Pun]) {
     ]));
 
     for pun in puns {
-        table.add_row(row![pun.pun, pun.original, pun.rhyme_word]);
+        table.add_row(row![pun.pun, pun.original, pun.phrase_source]);
     }
     table.printstd();
 }
@@ -85,7 +90,7 @@ fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String
     new_phrase.trim().to_string()
 }
 
-fn load_phrases() -> Vec<String> {
+fn load_phrases() -> Vec<Phrase> {
     // Get all filenames in phrases directory
     let phrase_filenames: Vec<String> = read_dir("phrases")
         .unwrap()
@@ -98,7 +103,12 @@ fn load_phrases() -> Vec<String> {
     let mut phrases = Vec::new();
 
     for filename in phrase_filenames {
-        phrases.append(&mut lines_from_file(filename));
+        for line in lines_from_file(&filename) {
+            phrases.push(Phrase {
+                content: line,
+                source: filename.clone(),
+            });
+        }
     }
 
     return phrases;
@@ -108,14 +118,14 @@ fn puns(rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
     let phrases = load_phrases();
     let mut puns = Vec::new();
     for phrase in phrases {
-        let phrase_lower = phrase.to_lowercase();
+        let phrase_lower = phrase.content.to_lowercase();
         for rhyme in rhymes {
             let new_phrase = replace_word_in_phrase(&phrase_lower, &rhyme.word, word);
             if new_phrase != phrase_lower {
                 puns.push(Pun {
-                    original: phrase.to_string(),
+                    original: phrase.content.to_string(),
                     pun: new_phrase,
-                    rhyme_word: rhyme.word.to_string(),
+                    phrase_source: phrase.source.clone(),
                 });
             }
         }
@@ -130,7 +140,7 @@ fn keep_single_words(rhymes: Vec<&Rhyme>) -> Vec<&Rhyme> {
         .collect();
 }
 
-fn lines_from_file(filename: impl AsRef<Path>) -> Vec<String> {
+fn lines_from_file(filename: &impl AsRef<Path>) -> Vec<String> {
     let file = File::open(filename).expect("no such file");
     let buf = BufReader::new(file);
     buf.lines()
