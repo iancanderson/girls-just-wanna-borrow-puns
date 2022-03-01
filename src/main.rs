@@ -37,6 +37,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let beatles_songs = lines_from_file("phrases/beatles-songs.txt");
 
     let puns = puns(&beatles_songs, &best_rhymes, word);
+    print_puns(&puns);
+
+    Ok(())
+}
+
+fn print_puns(puns: &Vec<Pun>) {
     let mut table = Table::new();
     table.add_row(Row::new(vec![
         Cell::new("Pun")
@@ -60,8 +66,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         table.add_row(row![pun.pun, pun.original, pun.rhyme_word]);
     }
     table.printstd();
-
-    Ok(())
 }
 
 fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String {
