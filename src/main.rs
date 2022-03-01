@@ -21,7 +21,9 @@ struct Pun {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let word: &str = "pay";
+    let args: Vec<String> = std::env::args().collect();
+    let word: &str = args[1].as_str();
+
     let rhymeurl: std::string::String = format!("https://api.datamuse.com/words?rel_rhy={}", word);
     let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
     let rhyme_references = rhymes.iter().map(|r| r).collect::<Vec<_>>();
