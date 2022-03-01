@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate prettytable;
+
+use prettytable::{Cell, Row, Table};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -35,7 +39,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("{:?}", beatles_songs);
 
     let puns = puns(&beatles_songs, &best_rhymes, word);
-    println!("{:?}", puns);
+    let mut table = Table::new();
+    table.add_row(Row::new(vec![
+        Cell::new("Pun")
+            .with_style(prettytable::Attr::Bold)
+            .with_style(prettytable::Attr::ForegroundColor(
+                prettytable::color::GREEN,
+            )),
+        Cell::new("Original")
+            .with_style(prettytable::Attr::Bold)
+            .with_style(prettytable::Attr::ForegroundColor(
+                prettytable::color::GREEN,
+            )),
+        Cell::new("Rhyme word")
+            .with_style(prettytable::Attr::Bold)
+            .with_style(prettytable::Attr::ForegroundColor(
+                prettytable::color::GREEN,
+            )),
+    ]));
+
+    for pun in puns {
+        table.add_row(row![pun.pun, pun.original, pun.rhyme_word]);
+    }
+    table.printstd();
 
     Ok(())
 }
@@ -43,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String {
     // println!("Replacing {} with {} in {}", word, replacement, phrase);
     let mut new_phrase = String::new();
-    let mut phrase_words = phrase.split_whitespace();
+    let phrase_words = phrase.split_whitespace();
     for phrase_word in phrase_words {
         if phrase_word == word {
             new_phrase.push_str(replacement);
