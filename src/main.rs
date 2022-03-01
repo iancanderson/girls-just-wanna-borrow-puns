@@ -2,6 +2,7 @@
 extern crate prettytable;
 
 use prettytable::{Cell, Row, Table};
+use rand::prelude::SliceRandom;
 use reqwest;
 use serde::{Deserialize, Serialize};
 use std::fs::read_dir;
@@ -27,7 +28,8 @@ struct Pun {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
-    let word: &str = args[1].as_str();
+    let word: &str = &args[1];
+    let num_puns: &str = if args.len() > 2 { &args[2] } else { "10" };
 
     let rhymeurl: std::string::String = format!("https://api.datamuse.com/words?rel_rhy={}", word);
     let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
@@ -35,12 +37,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let best_rhymes = keep_single_words(rhyme_references);
 
     let puns = puns(&best_rhymes, word);
-    print_puns(&puns);
+    // Get random puns from vec
+    let random_puns =
+        puns.choose_multiple(&mut rand::thread_rng(), num_puns.parse::<usize>().unwrap());
+    print_puns(&random_puns.collect::<Vec<_>>());
 
     Ok(())
 }
 
-fn print_puns(puns: &Vec<Pun>) {
+fn print_puns(puns: &[&Pun]) {
     let mut table = Table::new();
     table.add_row(Row::new(vec![
         Cell::new("Pun")
