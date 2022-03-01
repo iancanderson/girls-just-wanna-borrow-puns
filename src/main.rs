@@ -4,6 +4,7 @@ extern crate prettytable;
 use prettytable::{Cell, Row, Table};
 use reqwest;
 use serde::{Deserialize, Serialize};
+use std::fs::read_dir;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -80,9 +81,22 @@ fn replace_word_in_phrase(phrase: &str, word: &str, replacement: &str) -> String
 }
 
 fn load_phrases() -> Vec<String> {
-    // Load array of strings from text file
-    let beatles_songs = lines_from_file("phrases/beatles-songs.txt");
-    return beatles_songs;
+    // Get all filenames in phrases directory
+    let phrase_filenames: Vec<String> = read_dir("phrases")
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.is_file())
+        .filter(|path| path.extension().unwrap() == "txt")
+        .map(|path| path.to_str().unwrap().to_string())
+        .collect();
+
+    let mut phrases = Vec::new();
+
+    for filename in phrase_filenames {
+        phrases.append(&mut lines_from_file(filename));
+    }
+
+    return phrases;
 }
 
 fn puns(rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
