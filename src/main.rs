@@ -36,18 +36,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let word: &str = &args[1];
     let num_puns: &str = if args.len() > 2 { &args[2] } else { "10" };
 
-    let rhymeurl: std::string::String = format!("https://api.datamuse.com/words?rel_rhy={}", word);
-    let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
-    let rhyme_references = rhymes.iter().map(|r| r).collect::<Vec<_>>();
-    let best_rhymes = keep_single_words(rhyme_references);
-
-    let puns = puns(&best_rhymes, word);
+    let (rhymes, phrases) = load_rhymes_and_phrases(word).unwrap();
+    let puns = puns(&phrases, &rhymes, word);
     // Get random puns from vec
     let random_puns =
         puns.choose_multiple(&mut rand::thread_rng(), num_puns.parse::<usize>().unwrap());
     print_puns(&random_puns.collect::<Vec<_>>());
 
     Ok(())
+}
+
+fn load_rhymes_and_phrases(
+    word: &str,
+) -> Result<(Vec<Rhyme>, Vec<Phrase>), Box<dyn std::error::Error>> {
+    let rhymeurl: std::string::String = format!("https://api.datamuse.com/words?rel_rhy={}", word);
+    let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
+    let best_rhymes = keep_single_words(rhymes);
+    let phrases = load_phrases();
+    return Ok((best_rhymes, phrases));
 }
 
 fn print_puns(puns: &[&Pun]) {
@@ -124,8 +130,7 @@ fn load_phrases() -> Vec<Phrase> {
     return phrases;
 }
 
-fn puns(rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
-    let phrases = load_phrases();
+fn puns(phrases: &Vec<Phrase>, rhymes: &Vec<Rhyme>, word: &str) -> Vec<Pun> {
     let mut puns = Vec::new();
     for phrase in phrases {
         let phrase_lower = phrase.content.to_lowercase();
@@ -143,7 +148,7 @@ fn puns(rhymes: &Vec<&Rhyme>, word: &str) -> Vec<Pun> {
     puns
 }
 
-fn keep_single_words(rhymes: Vec<&Rhyme>) -> Vec<&Rhyme> {
+fn keep_single_words(rhymes: Vec<Rhyme>) -> Vec<Rhyme> {
     return rhymes
         .into_iter()
         .filter(|r| r.word.split(" ").count() == 1)
