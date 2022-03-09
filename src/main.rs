@@ -100,15 +100,25 @@ fn load_phrases() -> Vec<Phrase> {
         .map(|path| path.to_str().unwrap().to_string())
         .collect();
 
-    let mut phrases = Vec::new();
-
+    let (tx, rx) = std::sync::mpsc::channel();
     for filename in phrase_filenames {
-        for line in lines_from_file(&filename) {
-            phrases.push(Phrase {
-                content: line,
-                source: filename.clone(),
-            });
-        }
+        let tx = tx.clone();
+        std::thread::spawn(move || {
+            for line in lines_from_file(&filename) {
+                tx.send(Phrase {
+                    content: line,
+                    source: filename.clone(),
+                })
+                .unwrap();
+            }
+        });
+    }
+
+    drop(tx);
+
+    let mut phrases = Vec::new();
+    while let Ok(received) = rx.recv() {
+        phrases.push(received);
     }
 
     return phrases;
