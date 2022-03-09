@@ -50,9 +50,26 @@ fn load_rhymes_and_phrases(
     word: &str,
 ) -> Result<(Vec<Rhyme>, Vec<Phrase>), Box<dyn std::error::Error>> {
     let rhymeurl: std::string::String = format!("https://api.datamuse.com/words?rel_rhy={}", word);
-    let rhymes = reqwest::blocking::get(&rhymeurl)?.json::<RhymeResultOk>()?;
-    let best_rhymes = keep_single_words(rhymes);
-    let phrases = load_phrases();
+
+    let (tx, rx_rhymes) = std::sync::mpsc::channel();
+    std::thread::spawn(move || match reqwest::blocking::get(&rhymeurl) {
+        Ok(rhymes_result) => {
+            let rhymes = rhymes_result.json::<RhymeResultOk>().unwrap();
+            let best_rhymes = keep_single_words(rhymes);
+            tx.send(best_rhymes).unwrap();
+        }
+        Err(_e) => {
+            tx.send(Vec::new()).unwrap();
+        }
+    });
+
+    let (tx, rx_phrases) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        tx.send(load_phrases()).unwrap();
+    });
+    let best_rhymes = rx_rhymes.recv().unwrap();
+    let phrases = rx_phrases.recv().unwrap();
+
     return Ok((best_rhymes, phrases));
 }
 
